@@ -78,6 +78,7 @@
 
           const [showPreview, setShowPreview] = useState(false);
           const [includePricesInPDF, setIncludePricesInPDF] = useState(true);
+          const [editingDoorId, setEditingDoorId] = useState(null);
 
           const aperturaOptions = ['Spinta a destra', 'Spinta a sinistra'];
           const sistemaCerniereOptions = [
@@ -255,7 +256,38 @@
               return;
             }
             
-            setDoors([...doors, { ...currentDoor, id: Date.now() }]);
+            if (editingDoorId) {
+              // Modalità modifica - sostituisci la porta esistente
+              setDoors(doors.map(door => 
+                door.id === editingDoorId ? { ...currentDoor, id: editingDoorId } : door
+              ));
+              setEditingDoorId(null);
+            } else {
+              // Modalità aggiunta normale
+              setDoors([...doors, { ...currentDoor, id: Date.now() }]);
+            }
+            
+            setCurrentDoor({
+              posizione: '', stanza: '', modelloPorta: '', prezzoBaseModello: 0, scontisticaModello: 0,
+              finitura: '', prezzoFinitura: 0, larghezza: '', altezza: '', spessoreMuro: '',
+              fuoriMisuraLarghezza: 0, fuoriMisuraAltezza: 0, fuoriMisuraSpessore: 0,
+              apertura: '', sistemaCerniere: '', prezzoCerniere: 0,
+              finituraFerramenta: '', prezzoFerramenta: 0, quantita: 1, note: ''
+            });
+          };
+
+          const editDoor = (doorId) => {
+            const doorToEdit = doors.find(door => door.id === doorId);
+            if (doorToEdit) {
+              setCurrentDoor({...doorToEdit});
+              setEditingDoorId(doorId);
+              // Scroll to top del form
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+          };
+
+          const cancelEdit = () => {
+            setEditingDoorId(null);
             setCurrentDoor({
               posizione: '', stanza: '', modelloPorta: '', prezzoBaseModello: 0, scontisticaModello: 0,
               finitura: '', prezzoFinitura: 0, larghezza: '', altezza: '', spessoreMuro: '',
@@ -393,6 +425,114 @@
 
           return (
             <div className="min-h-screen bg-gray-50">
+              {/* Modal Anteprima */}
+              {showPreview && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                    <div className="flex items-center justify-between p-6 border-b">
+                      <h3 className="text-xl font-light">Anteprima Documento</h3>
+                      <button
+                        onClick={() => setShowPreview(false)}
+                        className="text-gray-400 hover:text-black p-2"
+                      >
+                        <Icon name="X" size={20} />
+                      </button>
+                    </div>
+                    <div className="p-6 overflow-y-auto max-h-[70vh]">
+                      <div className="bg-white border p-8" style={{fontFamily: 'Arial, sans-serif'}}>
+                        <div className="text-center mb-8 border-b-2 border-black pb-4">
+                          <img 
+                            src="./Logo.png" 
+                            alt="TWE Logo" 
+                            className="w-48 h-auto mx-auto mb-4"
+                          />
+                          <div className="text-lg font-medium">
+                            {includePricesInPDF ? 'PREVENTIVO/ORDINE PORTE DA INTERNO' : 'ORDINE PRODUZIONE PORTE DA INTERNO'}
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-8 mb-8 p-4 bg-gray-50">
+                          <div>
+                            <h4 className="font-bold mb-2">Dati Ordine</h4>
+                            <div>Commessa: {orderInfo.nomeCommessa || '[Da completare]'}</div>
+                            <div>Numero: {orderInfo.numeroOrdine || 'TWE-' + Date.now()}</div>
+                            <div>Agente: {orderInfo.nomeAgente || '[Da completare]'}</div>
+                            <div>Data: {new Date().toLocaleDateString('it-IT')}</div>
+                          </div>
+                          <div>
+                            <h4 className="font-bold mb-2">Dati Cliente</h4>
+                            <div>Cliente: {orderInfo.nomeCliente || '[Da completare]'}</div>
+                            <div>Indirizzo: {orderInfo.indirizzoConsegna || '[Da completare]'}</div>
+                            <div>P.IVA: {orderInfo.partitaIva || '[Da completare]'}</div>
+                          </div>
+                        </div>
+                        
+                        {doors.map((door, index) => (
+                          <div key={door.id} className="border border-gray-300 mb-4 p-4">
+                            <div className="flex justify-between items-center font-bold mb-2">
+                              <span>PORTA {index + 1} - {door.posizione} ({door.stanza})</span>
+                              {includePricesInPDF ? (
+                                <span>{formatCurrency(calculateDoorPrice(door))}</span>
+                              ) : (
+                                <span className="text-gray-500 italic">Prezzi riservati</span>
+                              )}
+                            </div>
+                            <div>Modello: {door.modelloPorta} | Qty: {door.quantita}</div>
+                            {door.finitura && <div>Finitura: {door.finitura}</div>}
+                            {door.larghezza && door.altezza && <div>Dimensioni: {door.larghezza} x {door.altezza} cm</div>}
+                            {door.spessoreMuro && <div>Spessore muro: {door.spessoreMuro} cm</div>}
+                            {door.apertura && <div>Apertura: {door.apertura}</div>}
+                            {door.sistemaCerniere && <div>Sistema cerniere: {door.sistemaCerniere}</div>}
+                            {door.finituraFerramenta && <div>Finitura ferramenta: {door.finituraFerramenta}</div>}
+                            {door.note && <div>Note: {door.note}</div>}
+                          </div>
+                        ))}
+                        
+                        <div className="mt-8 p-4 bg-gray-100">
+                          {includePricesInPDF ? (
+                            <>
+                              <div className="flex justify-between">
+                                <span>Subtotale porte:</span>
+                                <span>{formatCurrency(doors.reduce((sum, door) => sum + calculateDoorPrice(door), 0))}</span>
+                              </div>
+                              {orderInfo.costoTrasporto > 0 && (
+                                <div className="flex justify-between">
+                                  <span>Trasporto:</span>
+                                  <span>{formatCurrency(parseFloat(orderInfo.costoTrasporto))}</span>
+                                </div>
+                              )}
+                              {orderInfo.altriExtra.map(extra => 
+                                extra.prezzo > 0 && (
+                                  <div key={extra.id} className="flex justify-between">
+                                    <span>{extra.descrizione}:</span>
+                                    <span>{formatCurrency(parseFloat(extra.prezzo))}</span>
+                                  </div>
+                                )
+                              )}
+                              <div className="flex justify-between pt-2 border-t-2 border-blue-600 font-bold text-lg text-blue-600">
+                                <span>TOTALE:</span>
+                                <span>{formatCurrency(calculateOrderTotal())}</span>
+                              </div>
+                            </>
+                          ) : (
+                            <>
+                              <div className="text-gray-600 italic mb-2">DOCUMENTO PRODUZIONE - Prezzi non inclusi</div>
+                              <div><strong>Totale porte da produrre: {doors.reduce((sum, door) => sum + parseInt(door.quantita || 1), 0)}</strong></div>
+                              <div><strong>Totale articoli: {doors.length}</strong></div>
+                            </>
+                          )}
+                        </div>
+                        
+                        <div className="mt-8 text-center text-sm">
+                          <strong>TUCCI WOOD ESSENCE</strong><br/>
+                          www.tucciwoodessence.com
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <header className="bg-white border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-8 py-8">
                   <div className="flex items-center justify-between">
@@ -471,7 +611,16 @@
 
                 <div className="grid grid-cols-1 xl:grid-cols-4 gap-8">
                   <div className="xl:col-span-3 bg-white p-8">
-                    <h2 className="text-2xl font-light text-black mb-6">Nuova porta</h2>
+                    <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-2xl font-light text-black">
+                        {editingDoorId ? 'Modifica porta' : 'Nuova porta'}
+                      </h2>
+                      {editingDoorId && (
+                        <span className="text-sm text-blue-600 font-medium">
+                          Modalità modifica attiva
+                        </span>
+                      )}
+                    </div>
                     <div className="w-12 h-px bg-black mb-8"></div>
                     
                     <div className="space-y-6">
@@ -814,12 +963,23 @@
                         </div>
                       )}
 
-                      <button
-                        onClick={addDoor}
-                        className="w-full bg-black text-white font-light py-4 px-8 hover:bg-gray-800 transition-colors uppercase tracking-wide text-sm"
-                      >
-                        Aggiungi porta
-                      </button>
+                      <div className="flex gap-4">
+                        <button
+                          onClick={editingDoorId ? addDoor : addDoor}
+                          className="flex-1 bg-black text-white font-light py-4 px-8 hover:bg-gray-800 transition-colors uppercase tracking-wide text-sm"
+                        >
+                          {editingDoorId ? 'Salva Modifiche' : 'Aggiungi porta'}
+                        </button>
+                        
+                        {editingDoorId && (
+                          <button
+                            onClick={cancelEdit}
+                            className="px-6 py-4 border border-gray-400 text-gray-700 hover:bg-gray-100 transition-colors uppercase tracking-wide text-sm"
+                          >
+                            Annulla
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -839,12 +999,22 @@
                             <div key={door.id} className="border-b border-gray-200 pb-6">
                               <div className="flex justify-between items-start mb-3">
                                 <h4 className="font-light text-black">Porta {index + 1}</h4>
-                                <button
-                                  onClick={() => removeDoor(door.id)}
-                                  className="text-gray-400 hover:text-black transition-colors p-1"
-                                >
-                                  <Icon name="Trash2" size={16} />
-                                </button>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => editDoor(door.id)}
+                                    className="text-blue-600 hover:text-blue-800 transition-colors p-1 text-xs"
+                                    title="Modifica porta"
+                                  >
+                                    Modifica
+                                  </button>
+                                  <button
+                                    onClick={() => removeDoor(door.id)}
+                                    className="text-gray-400 hover:text-black transition-colors p-1"
+                                    title="Elimina porta"
+                                  >
+                                    <Icon name="Trash2" size={16} />
+                                  </button>
+                                </div>
                               </div>
                               <div className="space-y-1 text-sm font-light text-gray-600">
                                 <div>{door.posizione} • {door.stanza}</div>
