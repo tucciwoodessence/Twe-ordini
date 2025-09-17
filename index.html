@@ -9,6 +9,9 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        .serif-font { font-family: serif; }
+    </style>
 </head>
 <body>
     <div id="root"></div>
@@ -78,7 +81,7 @@
             }
           };
 
-          // Salva progetto in JSON
+          // Salva progetto
           const saveProject = () => {
             if (doors.length === 0) {
               alert('Nessun dato da salvare');
@@ -107,7 +110,7 @@
             URL.revokeObjectURL(url);
           };
 
-          // Carica progetto da JSON
+          // Carica progetto
           const loadProject = (event) => {
             const file = event.target.files[0];
             if (!file) return;
@@ -122,12 +125,10 @@
               try {
                 const projectData = JSON.parse(e.target.result);
                 
-                // Verifica struttura base del file
                 if (!projectData.orderInfo || !projectData.doors) {
                   throw new Error('File JSON non valido');
                 }
 
-                // Carica i dati
                 setOrderInfo(projectData.orderInfo);
                 setDoors(projectData.doors);
                 if (projectData.currentDoor) {
@@ -141,7 +142,6 @@
             };
             reader.readAsText(file);
             
-            // Reset dell'input file
             event.target.value = '';
           };
 
@@ -154,15 +154,7 @@
                       src="./Logo.png" 
                       alt="TWE Logo" 
                       className="mx-auto mb-6 w-64 h-auto"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'block';
-                      }}
                     />
-                    <div className="hidden text-center">
-                      <div className="text-4xl font-light mb-2" style={{fontFamily: 'serif'}}>twe</div>
-                      <div className="text-xs tracking-widest uppercase mb-4">TUCCI WOOD ESSENCE</div>
-                    </div>
                     <div className="text-lg text-gray-600">Accesso Riservato</div>
                   </div>
                   <div className="space-y-4">
@@ -296,17 +288,11 @@
             .summary { margin-top: 30px; padding: 15px; background: #f0f0f0; }
             .total { font-weight: bold; font-size: 18px; color: #2563eb; }
             .no-prices { color: #666; font-style: italic; }
-            .fallback-logo { font-size: 36px; font-family: serif; margin-bottom: 5px; }
-            .fallback-company { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 15px; }
           </style>
         </head>
         <body>
           <div class="header">
-            <img src="./Logo.png" alt="TWE Logo" class="logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
-            <div style="display: none;">
-              <div class="fallback-logo">twe</div>
-              <div class="fallback-company">TUCCI WOOD ESSENCE</div>
-            </div>
+            <img src="./Logo.png" alt="TWE Logo" class="logo" />
             <div class="title">${docTitle}</div>
           </div>
           
@@ -398,19 +384,7 @@
                         src="./Logo.png" 
                         alt="TWE Logo" 
                         className="w-48 h-auto mb-2"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
                       />
-                      <div className="hidden flex-col items-start">
-                        <div className="text-5xl font-light text-black mb-4" style={{fontFamily: 'serif'}}>
-                          twe
-                        </div>
-                        <div className="text-xs font-normal text-black tracking-widest uppercase">
-                          TUCCI WOOD ESSENCE
-                        </div>
-                      </div>
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-light text-gray-600">
@@ -908,7 +882,6 @@
                       )}
 
                       <div className="space-y-4">
-                        {/* Sezione Gestione Progetti */}
                         <div className="border-t border-gray-200 pt-6 space-y-4">
                           <h4 className="text-sm font-light text-black uppercase tracking-wide">Gestione Progetti</h4>
                           
