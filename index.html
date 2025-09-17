@@ -18,7 +18,24 @@
     
     <script type="text/babel">
         const { useState } = React;
-        const { Plus, Trash2, Download, Eye, X, Calculator, Upload, Save } = lucide;
+        
+        // Componente Icon con fallback emoji per evitare errori React
+        const Icon = ({ name, size = 16, className = "" }) => {
+          const iconMap = {
+            Plus: "➕",
+            Trash2: "🗑️", 
+            Download: "⬇️",
+            Eye: "👁️",
+            X: "✖️",
+            Calculator: "🧮",
+            Upload: "⬆️",
+            Save: "💾"
+          };
+          
+          return <span className={`inline-block ${className}`} style={{fontSize: `${size}px`}}>
+            {iconMap[name] || "❓"}
+          </span>;
+        };
 
         const DoorOrderGenerator = () => {
           const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -739,7 +756,7 @@
                       {(currentDoor.prezzoBaseModello > 0 || currentDoor.prezzoFinitura > 0 || currentDoor.prezzoCerniere > 0 || currentDoor.prezzoFerramenta > 0 || currentDoor.fuoriMisuraLarghezza > 0 || currentDoor.fuoriMisuraAltezza > 0 || currentDoor.fuoriMisuraSpessore > 0) && (
                         <div className="bg-gray-50 p-6 border border-gray-300">
                           <h4 className="text-sm font-light text-black mb-4 uppercase tracking-wide flex items-center">
-                            <Calculator size={16} className="mr-2" />
+                            <Icon name="Calculator" size={16} className="mr-2" />
                             Anteprima prezzo porta
                           </h4>
                           <div className="space-y-2 text-sm">
@@ -826,7 +843,7 @@
                                   onClick={() => removeDoor(door.id)}
                                   className="text-gray-400 hover:text-black transition-colors p-1"
                                 >
-                                  <Trash2 size={16} />
+                                  <Icon name="Trash2" size={16} />
                                 </button>
                               </div>
                               <div className="space-y-1 text-sm font-light text-gray-600">
@@ -890,7 +907,7 @@
                             disabled={doors.length === 0}
                             className="w-full border border-gray-600 bg-gray-600 text-white font-light py-3 px-6 hover:bg-gray-700 disabled:bg-gray-300 disabled:border-gray-300 disabled:cursor-not-allowed transition-colors uppercase tracking-wide text-sm flex items-center justify-center"
                           >
-                            <Save size={16} className="mr-2" />
+                            <Icon name="Save" size={16} className="mr-2" />
                             Salva Progetto
                           </button>
                           
@@ -906,7 +923,7 @@
                               htmlFor="loadProject"
                               className="w-full border border-gray-600 bg-gray-600 text-white font-light py-3 px-6 hover:bg-gray-700 transition-colors uppercase tracking-wide text-sm flex items-center justify-center cursor-pointer"
                             >
-                              <Upload size={16} className="mr-2" />
+                              <Icon name="Upload" size={16} className="mr-2" />
                               Carica Progetto
                             </label>
                           </div>
@@ -977,7 +994,7 @@
                           onClick={addExtraItem}
                           className="bg-gray-800 text-white font-light py-2 px-4 hover:bg-black transition-colors uppercase tracking-wide text-sm flex items-center"
                         >
-                          <Plus size={16} className="mr-2" />
+                          <Icon name="Plus" size={16} className="mr-2" />
                           Aggiungi extra
                         </button>
                       </div>
@@ -1022,7 +1039,7 @@
                                     onClick={() => removeExtraItem(extra.id)}
                                     className="text-red-500 hover:text-red-700 hover:bg-red-100 p-2 rounded transition-colors"
                                   >
-                                    <Trash2 size={16} />
+                                    <Icon name="Trash2" size={16} />
                                   </button>
                                 </div>
                               </div>
