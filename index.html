@@ -73,7 +73,8 @@
             finituraFerramenta: '',
             prezzoFerramenta: 0,
             quantita: 1,
-            note: ''
+            note: '',
+            extraPorta: []
           });
 
           const [showPreview, setShowPreview] = useState(false);
@@ -227,6 +228,30 @@
             setCurrentDoor({ ...currentDoor, [field]: value });
           };
 
+          // Gestione extra per porta
+          const addExtraToCurrentDoor = () => {
+            setCurrentDoor({
+              ...currentDoor,
+              extraPorta: [...currentDoor.extraPorta, { id: Date.now(), descrizione: '', prezzo: 0 }]
+            });
+          };
+
+          const updateExtraInCurrentDoor = (id, field, value) => {
+            setCurrentDoor({
+              ...currentDoor,
+              extraPorta: currentDoor.extraPorta.map(extra =>
+                extra.id === id ? { ...extra, [field]: value } : extra
+              )
+            });
+          };
+
+          const removeExtraFromCurrentDoor = (id) => {
+            setCurrentDoor({
+              ...currentDoor,
+              extraPorta: currentDoor.extraPorta.filter(extra => extra.id !== id)
+            });
+          };
+
           const calculateDoorPrice = (door) => {
             const prezzoBase = parseFloat(door.prezzoBaseModello) || 0;
             const sconto = parseFloat(door.scontisticaModello) || 0;
@@ -237,8 +262,13 @@
             const fuoriMisuraA = parseFloat(door.fuoriMisuraAltezza) || 0;
             const fuoriMisuraS = parseFloat(door.fuoriMisuraSpessore) || 0;
             
+            // Calcolo extra della porta
+            const prezzoExtraPorta = (door.extraPorta || []).reduce((sum, extra) => 
+              sum + (parseFloat(extra.prezzo) || 0), 0
+            );
+            
             const prezzoBaseConSconto = prezzoBase * (1 - sconto / 100);
-            const prezzoTotalePorta = prezzoBaseConSconto + prezzoFinitura + prezzoCerniere + prezzoFerramenta + fuoriMisuraL + fuoriMisuraA + fuoriMisuraS;
+            const prezzoTotalePorta = prezzoBaseConSconto + prezzoFinitura + prezzoCerniere + prezzoFerramenta + fuoriMisuraL + fuoriMisuraA + fuoriMisuraS + prezzoExtraPorta;
             
             return prezzoTotalePorta * (parseInt(door.quantita) || 1);
           };
@@ -272,7 +302,7 @@
               finitura: '', prezzoFinitura: 0, larghezza: '', altezza: '', spessoreMuro: '',
               fuoriMisuraLarghezza: 0, fuoriMisuraAltezza: 0, fuoriMisuraSpessore: 0,
               apertura: '', sistemaCerniere: '', prezzoCerniere: 0,
-              finituraFerramenta: '', prezzoFerramenta: 0, quantita: 1, note: ''
+              finituraFerramenta: '', prezzoFerramenta: 0, quantita: 1, note: '', extraPorta: []
             });
           };
 
@@ -293,7 +323,7 @@
               finitura: '', prezzoFinitura: 0, larghezza: '', altezza: '', spessoreMuro: '',
               fuoriMisuraLarghezza: 0, fuoriMisuraAltezza: 0, fuoriMisuraSpessore: 0,
               apertura: '', sistemaCerniere: '', prezzoCerniere: 0,
-              finituraFerramenta: '', prezzoFerramenta: 0, quantita: 1, note: ''
+              finituraFerramenta: '', prezzoFerramenta: 0, quantita: 1, note: '', extraPorta: []
             });
           };
 
@@ -374,6 +404,10 @@
               ${door.apertura ? `<div>Apertura: ${door.apertura}</div>` : ''}
               ${door.sistemaCerniere ? `<div>Sistema cerniere: ${door.sistemaCerniere}</div>` : ''}
               ${door.finituraFerramenta ? `<div>Finitura ferramenta: ${door.finituraFerramenta}</div>` : ''}
+              ${(door.extraPorta && door.extraPorta.length > 0) ? 
+                `<div><strong>Extra porta:</strong> ${door.extraPorta.map(extra => 
+                  `${extra.descrizione}${includePrices ? ` (${formatPrice(parseFloat(extra.prezzo) || 0)})` : ''}`
+                ).join(', ')}</div>` : ''}
               ${door.note ? `<div>Note: ${door.note}</div>` : ''}
             </div>
           `).join('')}
@@ -484,6 +518,13 @@
                             {door.apertura && <div>Apertura: {door.apertura}</div>}
                             {door.sistemaCerniere && <div>Sistema cerniere: {door.sistemaCerniere}</div>}
                             {door.finituraFerramenta && <div>Finitura ferramenta: {door.finituraFerramenta}</div>}
+                            {door.extraPorta && door.extraPorta.length > 0 && (
+                              <div>
+                                <strong>Extra porta:</strong> {door.extraPorta.map(extra => 
+                                  `${extra.descrizione}${includePricesInPDF ? ` (${formatCurrency(parseFloat(extra.prezzo) || 0)})` : ''}`
+                                ).join(', ')}
+                              </div>
+                            )}
                             {door.note && <div>Note: {door.note}</div>}
                           </div>
                         ))}
@@ -902,7 +943,69 @@
                         />
                       </div>
 
-                      {(currentDoor.prezzoBaseModello > 0 || currentDoor.prezzoFinitura > 0 || currentDoor.prezzoCerniere > 0 || currentDoor.prezzoFerramenta > 0 || currentDoor.fuoriMisuraLarghezza > 0 || currentDoor.fuoriMisuraAltezza > 0 || currentDoor.fuoriMisuraSpessore > 0) && (
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-light text-black">Extra per questa porta</h3>
+                          <button
+                            onClick={addExtraToCurrentDoor}
+                            className="bg-blue-600 text-white font-light py-2 px-4 hover:bg-blue-700 transition-colors uppercase tracking-wide text-sm flex items-center"
+                          >
+                            <Icon name="Plus" size={16} className="mr-2" />
+                            Aggiungi Extra
+                          </button>
+                        </div>
+
+                        {currentDoor.extraPorta.length === 0 ? (
+                          <p className="text-gray-500 font-light text-center py-6 border border-gray-200 bg-gray-50">
+                            Nessun extra aggiunto per questa porta
+                          </p>
+                        ) : (
+                          <div className="space-y-4">
+                            {currentDoor.extraPorta.map((extra, index) => (
+                              <div key={extra.id} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border border-gray-300 bg-blue-50">
+                                <div className="md:col-span-2">
+                                  <label className="block text-xs font-light text-black mb-2 uppercase tracking-wide">
+                                    Descrizione extra {index + 1}
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={extra.descrizione}
+                                    onChange={(e) => updateExtraInCurrentDoor(extra.id, 'descrizione', e.target.value)}
+                                    className="w-full p-3 border border-gray-300 focus:border-black focus:outline-none bg-white text-black text-sm"
+                                    placeholder="es. Lavorazione speciale, Accessorio, ecc..."
+                                  />
+                                </div>
+                                
+                                <div className="flex gap-2">
+                                  <div className="flex-1">
+                                    <label className="block text-xs font-light text-black mb-2 uppercase tracking-wide">
+                                      Prezzo (€)
+                                    </label>
+                                    <input
+                                      type="number"
+                                      value={extra.prezzo}
+                                      onChange={(e) => updateExtraInCurrentDoor(extra.id, 'prezzo', e.target.value)}
+                                      className="w-full p-3 border border-gray-300 focus:border-black focus:outline-none bg-white text-black text-sm"
+                                      placeholder="0.00"
+                                      step="0.01"
+                                    />
+                                  </div>
+                                  <div className="flex items-end">
+                                    <button
+                                      onClick={() => removeExtraFromCurrentDoor(extra.id)}
+                                      className="text-red-500 hover:text-red-700 hover:bg-red-100 p-2 rounded transition-colors"
+                                    >
+                                      <Icon name="Trash2" size={16} />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {(currentDoor.prezzoBaseModello > 0 || currentDoor.prezzoFinitura > 0 || currentDoor.prezzoCerniere > 0 || currentDoor.prezzoFerramenta > 0 || currentDoor.fuoriMisuraLarghezza > 0 || currentDoor.fuoriMisuraAltezza > 0 || currentDoor.fuoriMisuraSpessore > 0 || currentDoor.extraPorta.some(extra => extra.prezzo > 0)) && (
                         <div className="bg-gray-50 p-6 border border-gray-300">
                           <h4 className="text-sm font-light text-black mb-4 uppercase tracking-wide flex items-center">
                             <Icon name="Calculator" size={16} className="mr-2" />
@@ -955,6 +1058,14 @@
                                 <span>{formatCurrency(parseFloat(currentDoor.fuoriMisuraSpessore) || 0)}</span>
                               </div>
                             )}
+                            {currentDoor.extraPorta.map((extra, index) => (
+                              extra.prezzo > 0 && (
+                                <div key={extra.id} className="flex justify-between text-blue-600">
+                                  <span>{extra.descrizione || `Extra ${index + 1}`}:</span>
+                                  <span>{formatCurrency(parseFloat(extra.prezzo) || 0)}</span>
+                                </div>
+                              )
+                            ))}
                             <div className="flex justify-between pt-3 border-t border-gray-300 font-bold text-lg">
                               <span>Totale (x{currentDoor.quantita}):</span>
                               <span className="text-blue-600">{formatCurrency(calculateDoorPrice(currentDoor))}</span>
