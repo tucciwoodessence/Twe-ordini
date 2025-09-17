@@ -9,6 +9,9 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        .font-serif { font-family: serif; }
+    </style>
 </head>
 <body>
     <div id="root"></div>
@@ -68,7 +71,6 @@
           ];
           const finituraFerramentaOptions = ['Cromo satinato', 'Bianco', 'Nero', 'Altro'];
 
-          // Autenticazione
           const authenticate = () => {
             if (password === 'Twe2024!') {
               setIsAuthenticated(true);
@@ -78,7 +80,6 @@
             }
           };
 
-          // Salva progetto in JSON
           const saveProject = () => {
             if (doors.length === 0) {
               alert('Nessun dato da salvare');
@@ -107,7 +108,6 @@
             URL.revokeObjectURL(url);
           };
 
-          // Carica progetto da JSON
           const loadProject = (event) => {
             const file = event.target.files[0];
             if (!file) return;
@@ -122,12 +122,10 @@
               try {
                 const projectData = JSON.parse(e.target.result);
                 
-                // Verifica struttura base del file
                 if (!projectData.orderInfo || !projectData.doors) {
                   throw new Error('File JSON non valido');
                 }
 
-                // Carica i dati
                 setOrderInfo(projectData.orderInfo);
                 setDoors(projectData.doors);
                 if (projectData.currentDoor) {
@@ -141,7 +139,6 @@
             };
             reader.readAsText(file);
             
-            // Reset dell'input file
             event.target.value = '';
           };
 
@@ -150,16 +147,13 @@
               <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
                   <div className="text-center mb-8">
-                    <div className="text-center">
-                      <img 
-                        src="./Logo.png" 
-                        alt="TWE Logo" 
-                        className="mx-auto mb-6 w-64 h-auto"
-                        onError={(e) => {e.target.style.display = 'none'}}
-                      />
-                      <div className="text-4xl font-light mb-2 font-serif">twe</div>
-                      <div className="text-xs tracking-widest uppercase mb-4">TUCCI WOOD ESSENCE</div>
-                    </div>
+                    <img 
+                      src="./Logo.png" 
+                      alt="TWE Logo" 
+                      className="mx-auto mb-6 w-64 h-auto"
+                    />
+                    <div className="text-4xl font-light mb-2 font-serif">twe</div>
+                    <div className="text-xs tracking-widest uppercase mb-4">TUCCI WOOD ESSENCE</div>
                     <div className="text-lg text-gray-600">Accesso Riservato</div>
                   </div>
                   <div className="space-y-4">
@@ -184,34 +178,34 @@
           }
 
           const handleOrderInfoChange = (field, value) => {
-            setOrderInfo({ ...orderInfo, [field]: value });
+            setOrderInfo(prev => ({ ...prev, [field]: value }));
           };
 
           const addExtraItem = () => {
-            setOrderInfo({
-              ...orderInfo,
-              altriExtra: [...orderInfo.altriExtra, { id: Date.now(), descrizione: '', prezzo: 0 }]
-            });
+            setOrderInfo(prev => ({
+              ...prev,
+              altriExtra: [...prev.altriExtra, { id: Date.now(), descrizione: '', prezzo: 0 }]
+            }));
           };
 
           const updateExtraItem = (id, field, value) => {
-            setOrderInfo({
-              ...orderInfo,
-              altriExtra: orderInfo.altriExtra.map(item =>
+            setOrderInfo(prev => ({
+              ...prev,
+              altriExtra: prev.altriExtra.map(item =>
                 item.id === id ? { ...item, [field]: value } : item
               )
-            });
+            }));
           };
 
           const removeExtraItem = (id) => {
-            setOrderInfo({
-              ...orderInfo,
-              altriExtra: orderInfo.altriExtra.filter(item => item.id !== id)
-            });
+            setOrderInfo(prev => ({
+              ...prev,
+              altriExtra: prev.altriExtra.filter(item => item.id !== id)
+            }));
           };
 
           const handleInputChange = (field, value) => {
-            setCurrentDoor({ ...currentDoor, [field]: value });
+            setCurrentDoor(prev => ({ ...prev, [field]: value }));
           };
 
           const calculateDoorPrice = (door) => {
@@ -243,7 +237,7 @@
               return;
             }
             
-            setDoors([...doors, { ...currentDoor, id: Date.now() }]);
+            setDoors(prev => [...prev, { ...currentDoor, id: Date.now() }]);
             setCurrentDoor({
               posizione: '', stanza: '', modelloPorta: '', prezzoBaseModello: 0, scontisticaModello: 0,
               finitura: '', prezzoFinitura: 0, larghezza: '', altezza: '', spessoreMuro: '',
@@ -254,7 +248,7 @@
           };
 
           const removeDoor = (id) => {
-            setDoors(doors.filter(door => door.id !== id));
+            setDoors(prev => prev.filter(door => door.id !== id));
           };
 
           const formatCurrency = (value) => {
@@ -395,7 +389,6 @@
                         src="./Logo.png" 
                         alt="TWE Logo" 
                         className="w-48 h-auto mb-2"
-                        onError={(e) => {e.target.style.display = 'none'}}
                       />
                       <div className="text-5xl font-light text-black mb-4 font-serif">
                         twe
@@ -900,7 +893,6 @@
                       )}
 
                       <div className="space-y-4">
-                        {/* Sezione Gestione Progetti */}
                         <div className="border-t border-gray-200 pt-6 space-y-4">
                           <h4 className="text-sm font-light text-black uppercase tracking-wide">Gestione Progetti</h4>
                           
