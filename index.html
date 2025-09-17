@@ -150,17 +150,14 @@
               <div className="min-h-screen bg-gray-50 flex items-center justify-center">
                 <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
                   <div className="text-center mb-8">
-                    <img 
-                      src="./Logo.png" 
-                      alt="TWE Logo" 
-                      className="mx-auto mb-6 w-64 h-auto"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'block';
-                      }}
-                    />
-                    <div className="hidden text-center">
-                      <div className="text-4xl font-light mb-2" style={{fontFamily: 'serif'}}>twe</div>
+                    <div className="text-center">
+                      <img 
+                        src="./Logo.png" 
+                        alt="TWE Logo" 
+                        className="mx-auto mb-6 w-64 h-auto"
+                        onError={(e) => {e.target.style.display = 'none'}}
+                      />
+                      <div className="text-4xl font-light mb-2 font-serif">twe</div>
                       <div className="text-xs tracking-widest uppercase mb-4">TUCCI WOOD ESSENCE</div>
                     </div>
                     <div className="text-lg text-gray-600">Accesso Riservato</div>
@@ -398,18 +395,13 @@
                         src="./Logo.png" 
                         alt="TWE Logo" 
                         className="w-48 h-auto mb-2"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
+                        onError={(e) => {e.target.style.display = 'none'}}
                       />
-                      <div className="hidden flex-col items-start">
-                        <div className="text-5xl font-light text-black mb-4" style={{fontFamily: 'serif'}}>
-                          twe
-                        </div>
-                        <div className="text-xs font-normal text-black tracking-widest uppercase">
-                          TUCCI WOOD ESSENCE
-                        </div>
+                      <div className="text-5xl font-light text-black mb-4 font-serif">
+                        twe
+                      </div>
+                      <div className="text-xs font-normal text-black tracking-widest uppercase">
+                        TUCCI WOOD ESSENCE
                       </div>
                     </div>
                     <div className="text-right">
