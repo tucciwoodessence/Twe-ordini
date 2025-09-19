@@ -48,6 +48,7 @@
             nomeCliente: '',
             indirizzoConsegna: '',
             partitaIva: '',
+            dataConsegnaPrevista: '',
             costoTrasporto: 0,
             altriExtra: []
           });
@@ -335,6 +336,12 @@
             return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value);
           };
 
+          const formatDate = (dateString) => {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('it-IT');
+          };
+
           const generateOrder = (includePrices = true) => {
             if (doors.length === 0) {
               alert('Aggiungere almeno una porta all\'ordine');
@@ -382,6 +389,7 @@
               <div>Numero: ${orderInfo.numeroOrdine || 'TWE-' + Date.now()}</div>
               <div>Agente: ${orderInfo.nomeAgente || '[Da completare]'}</div>
               <div>Data: ${new Date().toLocaleDateString('it-IT')}</div>
+              ${orderInfo.dataConsegnaPrevista ? `<div>Consegna prevista: ${formatDate(orderInfo.dataConsegnaPrevista)}</div>` : ''}
             </div>
             <div>
               <h4>Dati Cliente</h4>
@@ -492,6 +500,9 @@
                             <div>Numero: {orderInfo.numeroOrdine || 'TWE-' + Date.now()}</div>
                             <div>Agente: {orderInfo.nomeAgente || '[Da completare]'}</div>
                             <div>Data: {new Date().toLocaleDateString('it-IT')}</div>
+                            {orderInfo.dataConsegnaPrevista && (
+                              <div>Consegna prevista: {formatDate(orderInfo.dataConsegnaPrevista)}</div>
+                            )}
                           </div>
                           <div>
                             <h4 className="font-bold mb-2">Dati Cliente</h4>
@@ -647,6 +658,17 @@
                       className="w-full p-4 border border-gray-300 focus:border-black focus:outline-none bg-white text-black"
                       placeholder="Partita IVA"
                     />
+                    <div>
+                      <label className="block text-sm font-light text-black mb-3 uppercase tracking-wide">
+                        Data di Consegna prevista
+                      </label>
+                      <input
+                        type="date"
+                        value={orderInfo.dataConsegnaPrevista}
+                        onChange={(e) => handleOrderInfoChange('dataConsegnaPrevista', e.target.value)}
+                        className="w-full p-4 border border-gray-300 focus:border-black focus:outline-none bg-white text-black"
+                      />
+                    </div>
                   </div>
                 </div>
 
