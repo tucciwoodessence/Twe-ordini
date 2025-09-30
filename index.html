@@ -413,10 +413,10 @@
               ${door.sistemaCerniere ? `<div>Sistema cerniere: ${door.sistemaCerniere}</div>` : ''}
               ${door.finituraFerramenta ? `<div>Finitura ferramenta: ${door.finituraFerramenta}</div>` : ''}
               ${(door.extraPorta && door.extraPorta.length > 0) ? 
-                `<div><strong>Extra porta:</strong> ${door.extraPorta.map(extra => 
-                  `${extra.descrizione}${includePrices ? ` (${formatPrice(parseFloat(extra.prezzo) || 0)})` : ''}`
-                ).join(', ')}</div>` : ''}
-              ${door.note ? `<div>Note: ${door.note}</div>` : ''}
+                `<div><strong>Extra porta:</strong></div>${door.extraPorta.map((extra, idx) => 
+                  `<div style="margin-left: 15px;">• ${extra.descrizione}${includePrices ? ` (${formatPrice(parseFloat(extra.prezzo) || 0)})` : ''}</div>`
+                ).join('')}` : ''}
+              ${door.note ? `<div>Note: ${door.note.replace(/\n/g, '<br>')}</div>` : ''}
             </div>
           `).join('')}
           
@@ -531,12 +531,24 @@
                             {door.finituraFerramenta && <div>Finitura ferramenta: {door.finituraFerramenta}</div>}
                             {door.extraPorta && door.extraPorta.length > 0 && (
                               <div>
-                                <strong>Extra porta:</strong> {door.extraPorta.map(extra => 
-                                  `${extra.descrizione}${includePricesInPDF ? ` (${formatCurrency(parseFloat(extra.prezzo) || 0)})` : ''}`
-                                ).join(', ')}
+                                <strong>Extra porta:</strong>
+                                {door.extraPorta.map((extra, idx) => (
+                                  <div key={idx} style={{marginLeft: '15px'}}>
+                                    • {extra.descrizione}{includePricesInPDF ? ` (${formatCurrency(parseFloat(extra.prezzo) || 0)})` : ''}
+                                  </div>
+                                ))}
                               </div>
                             )}
-                            {door.note && <div>Note: {door.note}</div>}
+                            {door.note && (
+                              <div>
+                                Note: {door.note.split('\n').map((line, i) => (
+                                  <span key={i}>
+                                    {line}
+                                    {i < door.note.split('\n').length - 1 && <br />}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         ))}
                         
