@@ -328,6 +328,42 @@
             });
           };
 
+          const resetOrder = () => {
+            if (doors.length > 0 || orderInfo.nomeCommessa || orderInfo.nomeCliente) {
+              const confirmReset = window.confirm('Sei sicuro di voler iniziare un nuovo ordine? Tutti i dati non salvati andranno persi.');
+              if (!confirmReset) return;
+            }
+            
+            // Reset completo di tutti i dati
+            setOrderInfo({
+              nomeCommessa: '',
+              numeroOrdine: '',
+              nomeAgente: '',
+              nomeCliente: '',
+              indirizzoConsegna: '',
+              partitaIva: '',
+              dataConsegnaPrevista: '',
+              costoTrasporto: 0,
+              altriExtra: []
+            });
+            
+            setDoors([]);
+            
+            setCurrentDoor({
+              posizione: '', stanza: '', modelloPorta: '', prezzoBaseModello: 0, scontisticaModello: 0,
+              finitura: '', prezzoFinitura: 0, larghezza: '', altezza: '', spessoreMuro: '',
+              fuoriMisuraLarghezza: 0, fuoriMisuraAltezza: 0, fuoriMisuraSpessore: 0,
+              apertura: '', sistemaCerniere: '', prezzoCerniere: 0,
+              finituraFerramenta: '', prezzoFerramenta: 0, quantita: 1, note: '', extraPorta: []
+            });
+            
+            setEditingDoorId(null);
+            setIncludePricesInPDF(true);
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          };
+
           const removeDoor = (id) => {
             setDoors(doors.filter(door => door.id !== id));
           };
@@ -413,10 +449,10 @@
               ${door.sistemaCerniere ? `<div>Sistema cerniere: ${door.sistemaCerniere}</div>` : ''}
               ${door.finituraFerramenta ? `<div>Finitura ferramenta: ${door.finituraFerramenta}</div>` : ''}
               ${(door.extraPorta && door.extraPorta.length > 0) ? 
-                `<div><strong>Extra porta:</strong></div>${door.extraPorta.map((extra, idx) => 
-                  `<div style="margin-left: 15px;">• ${extra.descrizione}${includePrices ? ` (${formatPrice(parseFloat(extra.prezzo) || 0)})` : ''}</div>`
-                ).join('')}` : ''}
-              ${door.note ? `<div>Note: ${door.note.replace(/\n/g, '<br>')}</div>` : ''}
+                `<div><strong>Extra porta:</strong> ${door.extraPorta.map(extra => 
+                  `${extra.descrizione}${includePrices ? ` (${formatPrice(parseFloat(extra.prezzo) || 0)})` : ''}`
+                ).join(', ')}</div>` : ''}
+              ${door.note ? `<div>Note: ${door.note}</div>` : ''}
             </div>
           `).join('')}
           
@@ -531,24 +567,12 @@
                             {door.finituraFerramenta && <div>Finitura ferramenta: {door.finituraFerramenta}</div>}
                             {door.extraPorta && door.extraPorta.length > 0 && (
                               <div>
-                                <strong>Extra porta:</strong>
-                                {door.extraPorta.map((extra, idx) => (
-                                  <div key={idx} style={{marginLeft: '15px'}}>
-                                    • {extra.descrizione}{includePricesInPDF ? ` (${formatCurrency(parseFloat(extra.prezzo) || 0)})` : ''}
-                                  </div>
-                                ))}
+                                <strong>Extra porta:</strong> {door.extraPorta.map(extra => 
+                                  `${extra.descrizione}${includePricesInPDF ? ` (${formatCurrency(parseFloat(extra.prezzo) || 0)})` : ''}`
+                                ).join(', ')}
                               </div>
                             )}
-                            {door.note && (
-                              <div>
-                                Note: {door.note.split('\n').map((line, i) => (
-                                  <span key={i}>
-                                    {line}
-                                    {i < door.note.split('\n').length - 1 && <br />}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
+                            {door.note && <div>Note: {door.note}</div>}
                           </div>
                         ))}
                         
