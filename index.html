@@ -635,12 +635,20 @@
                       <div className="text-sm font-light text-gray-600">
                         Sistema Preventivazione/Ordine
                       </div>
-                      <button
-                        onClick={() => setIsAuthenticated(false)}
-                        className="mt-2 text-xs text-gray-400 hover:text-black"
-                      >
-                        Logout
-                      </button>
+                      <div className="flex gap-4 mt-2 justify-end">
+                        <button
+                          onClick={resetOrder}
+                          className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                          Nuovo Ordine
+                        </button>
+                        <button
+                          onClick={() => setIsAuthenticated(false)}
+                          className="text-xs text-gray-400 hover:text-black"
+                        >
+                          Logout
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
