@@ -101,8 +101,8 @@
             }
           };
 
-          // Salva progetto
-          const saveProject = () => {
+          // Salva progetto in JSON
+          const saveProject = async () => {
             if (doors.length === 0) {
               alert('Nessun dato da salvare');
               return;
@@ -117,12 +117,39 @@
             };
 
             const dataStr = JSON.stringify(projectData, null, 2);
-            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const fileName = `TWE-Progetto-${orderInfo.nomeCommessa || 'Nuovo'}-${new Date().toLocaleDateString('it-IT').replace(/\//g, '-')}.json`;
+
+            // Prova a usare File System Access API (Chrome/Edge moderni)
+            if ('showSaveFilePicker' in window) {
+              try {
+                const handle = await window.showSaveFilePicker({
+                  suggestedName: fileName,
+                  types: [{
+                    description: 'File JSON',
+                    accept: { 'application/json': ['.json'] }
+                  }]
+                });
+                
+                const writable = await handle.createWritable();
+                await writable.write(dataStr);
+                await writable.close();
+                
+                alert('Progetto salvato con successo!');
+                return;
+              } catch (err) {
+                // Utente ha annullato o errore - passa al fallback
+                if (err.name !== 'AbortError') {
+                  console.error('Errore salvataggio:', err);
+                }
+              }
+            }
             
+            // Fallback: download tradizionale in Downloads
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
             const url = URL.createObjectURL(dataBlob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `TWE-Progetto-${orderInfo.nomeCommessa || 'Nuovo'}-${new Date().toLocaleDateString('it-IT').replace(/\//g, '-')}.json`;
+            a.download = fileName;
             a.style.display = 'none';
             document.body.appendChild(a);
             a.click();
