@@ -29,7 +29,10 @@
             X: "✖️",
             Calculator: "🧮",
             Upload: "⬆️",
-            Save: "💾"
+            Save: "💾",
+            Image: "🖼️",
+            ArrowUp: "⬆️",
+            ArrowDown: "⬇️"
           };
           
           return <span className={`inline-block ${className}`} style={{fontSize: `${size}px`}}>
@@ -40,6 +43,11 @@
         const DoorOrderGenerator = () => {
           const [isAuthenticated, setIsAuthenticated] = useState(false);
           const [password, setPassword] = useState('');
+          
+          // Stati per gestione immagini
+          const [uploadedImages, setUploadedImages] = useState([]);
+          const [showImageUpload, setShowImageUpload] = useState(false);
+          const [showGenerateMenu, setShowGenerateMenu] = useState(false);
           
           const [orderInfo, setOrderInfo] = useState({
             nomeCommessa: '',
@@ -91,6 +99,69 @@
           ];
           const finituraFerramentaOptions = ['Cromo satinato', 'Bianco', 'Nero', 'Altro'];
 
+          // Funzioni per gestione immagini
+          const handleImageUpload = (e) => {
+            const files = Array.from(e.target.files);
+            processImages(files);
+          };
+
+          const handleImageDrop = (e) => {
+            e.preventDefault();
+            const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+            processImages(files);
+          };
+
+          const handleDragOver = (e) => {
+            e.preventDefault();
+          };
+
+          const processImages = (files) => {
+            files.forEach(file => {
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                setUploadedImages(prev => [...prev, {
+                  id: Date.now() + Math.random(),
+                  data: e.target.result,
+                  name: file.name
+                }]);
+              };
+              reader.readAsDataURL(file);
+            });
+          };
+
+          const removeImage = (id) => {
+            setUploadedImages(prev => prev.filter(img => img.id !== id));
+          };
+
+          const moveImage = (id, direction) => {
+            setUploadedImages(prev => {
+              const index = prev.findIndex(img => img.id === id);
+              if (index === -1) return prev;
+              
+              const newIndex = direction === 'up' ? index - 1 : index + 1;
+              if (newIndex < 0 || newIndex >= prev.length) return prev;
+              
+              const newArray = [...prev];
+              [newArray[index], newArray[newIndex]] = [newArray[newIndex], newArray[index]];
+              return newArray;
+            });
+          };
+
+          const proceedWithGeneration = (withImages) => {
+            setShowGenerateMenu(false);
+            if (withImages) {
+              setShowImageUpload(true);
+            } else {
+              generateOrder(includePricesInPDF, []);
+            }
+          };
+
+          const confirmImageUpload = () => {
+            setShowImageUpload(false);
+            generateOrder(includePricesInPDF, uploadedImages);
+            setUploadedImages([]);
+          };
+
           // Autenticazione
           const authenticate = () => {
             if (password === 'Twe2024!') {
@@ -137,7 +208,6 @@
                 alert('Progetto salvato con successo!');
                 return;
               } catch (err) {
-                // Utente ha annullato o errore - passa al fallback
                 if (err.name !== 'AbortError') {
                   console.error('Errore salvataggio:', err);
                 }
@@ -290,7 +360,6 @@
             const fuoriMisuraA = parseFloat(door.fuoriMisuraAltezza) || 0;
             const fuoriMisuraS = parseFloat(door.fuoriMisuraSpessore) || 0;
             
-            // Calcolo extra della porta
             const prezzoExtraPorta = (door.extraPorta || []).reduce((sum, extra) => 
               sum + (parseFloat(extra.prezzo) || 0), 0
             );
@@ -315,13 +384,11 @@
             }
             
             if (editingDoorId) {
-              // Modalità modifica - sostituisci la porta esistente
               setDoors(doors.map(door => 
                 door.id === editingDoorId ? { ...currentDoor, id: editingDoorId } : door
               ));
               setEditingDoorId(null);
             } else {
-              // Modalità aggiunta normale
               setDoors([...doors, { ...currentDoor, id: Date.now() }]);
             }
             
@@ -339,7 +406,6 @@
             if (doorToEdit) {
               setCurrentDoor({...doorToEdit});
               setEditingDoorId(doorId);
-              // Scroll to top del form
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }
           };
@@ -361,7 +427,6 @@
               if (!confirmReset) return;
             }
             
-            // Reset completo di tutti i dati
             setOrderInfo({
               nomeCommessa: '',
               numeroOrdine: '',
@@ -387,7 +452,6 @@
             setEditingDoorId(null);
             setIncludePricesInPDF(true);
             
-            // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
           };
 
@@ -405,7 +469,7 @@
             return date.toLocaleDateString('it-IT');
           };
 
-          const generateOrder = (includePrices = true) => {
+          const generateOrder = (includePrices = true, images = []) => {
             if (doors.length === 0) {
               alert('Aggiungere almeno una porta all\'ordine');
               return;
@@ -420,6 +484,21 @@
             
             const docTitle = includePrices ? 'PREVENTIVO/ORDINE PORTE DA INTERNO' : 'ORDINE PRODUZIONE PORTE DA INTERNO';
             const fileName = includePrices ? 'TWE-Preventivo' : 'TWE-Produzione';
+            
+            // Sezione immagini HTML
+            const imagesSection = images.length > 0 ? `
+              <div style="margin: 30px 0; padding: 20px; background: #f9f9f9; border: 1px solid #ddd;">
+                <h3 style="margin: 0 0 20px 0; font-size: 16px; font-weight: bold;">Galleria Prodotti</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
+                  ${images.map(img => `
+                    <div style="border: 1px solid #ddd; padding: 10px; background: white;">
+                      <img src="${img.data}" alt="${img.name}" style="width: 100%; height: auto; display: block;" />
+                      <div style="margin-top: 8px; font-size: 11px; color: #666; text-align: center;">${img.name}</div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            ` : '';
             
             const orderHtml = `<!DOCTYPE html>
         <html>
@@ -437,6 +516,27 @@
             .summary { margin-top: 30px; padding: 15px; background: #f0f0f0; }
             .total { font-weight: bold; font-size: 18px; color: #2563eb; }
             .no-prices { color: #666; font-style: italic; }
+            .signature-section { 
+              margin-top: 50px; 
+              padding: 30px 20px; 
+              border-top: 2px solid #000; 
+              display: grid; 
+              grid-template-columns: 1fr 1fr; 
+              gap: 40px; 
+            }
+            .signature-box { text-align: center; }
+            .signature-label { font-weight: bold; margin-bottom: 40px; font-size: 14px; }
+            .signature-line { 
+              border-top: 1px solid #000; 
+              margin-top: 60px; 
+              padding-top: 8px; 
+              font-size: 11px; 
+              color: #666; 
+            }
+            .signature-date { margin-top: 20px; font-size: 12px; color: #666; }
+            @media print {
+              .signature-section { page-break-inside: avoid; }
+            }
           </style>
         </head>
         <body>
@@ -461,6 +561,8 @@
               <div>P.IVA: ${orderInfo.partitaIva || '[Da completare]'}</div>
             </div>
           </div>
+          
+          ${imagesSection}
           
           ${doors.map((door, index) => `
             <div class="door">
@@ -494,6 +596,27 @@
               <div><strong>Totale porte da produrre: ${doors.reduce((sum, door) => sum + parseInt(door.quantita || 1), 0)}</strong></div>
               <div><strong>Totale articoli: ${doors.length}</strong></div>
             `}
+          </div>
+          
+          <div class="signature-section">
+            <div class="signature-box">
+              <div class="signature-label">PER ACCETTAZIONE CLIENTE</div>
+              <div class="signature-line">
+                Firma e timbro
+              </div>
+              <div class="signature-date">
+                Data: _____________________
+              </div>
+            </div>
+            <div class="signature-box">
+              <div class="signature-label">UFFICIO COMMERCIALE</div>
+              <div class="signature-line">
+                Tucci Wood Essence
+              </div>
+              <div class="signature-date">
+                Data: ${new Date().toLocaleDateString('it-IT')}
+              </div>
+            </div>
           </div>
           
           <div style="margin-top: 30px; text-align: center; font-size: 12px;">
@@ -530,6 +653,151 @@
 
           return (
             <div className="min-h-screen bg-gray-50">
+              {/* Modal Menu Generazione */}
+              {showGenerateMenu && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-white rounded-lg max-w-md w-full p-8">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-xl font-light">Genera Documento</h3>
+                      <button
+                        onClick={() => setShowGenerateMenu(false)}
+                        className="text-gray-400 hover:text-black p-2"
+                      >
+                        <Icon name="X" size={20} />
+                      </button>
+                    </div>
+                    <div className="space-y-4">
+                      <button
+                        onClick={() => proceedWithGeneration(false)}
+                        className="w-full bg-black text-white font-light py-4 px-6 hover:bg-gray-800 transition-colors uppercase tracking-wide text-sm"
+                      >
+                        Genera Senza Immagini
+                      </button>
+                      <button
+                        onClick={() => proceedWithGeneration(true)}
+                        className="w-full bg-blue-600 text-white font-light py-4 px-6 hover:bg-blue-700 transition-colors uppercase tracking-wide text-sm flex items-center justify-center"
+                      >
+                        <Icon name="Image" size={16} className="mr-2" />
+                        Genera Con Immagini
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Modal Upload Immagini */}
+              {showImageUpload && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                  <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-hidden">
+                    <div className="flex items-center justify-between p-6 border-b">
+                      <h3 className="text-xl font-light">Aggiungi Immagini al Preventivo</h3>
+                      <button
+                        onClick={() => {
+                          setShowImageUpload(false);
+                          setUploadedImages([]);
+                        }}
+                        className="text-gray-400 hover:text-black p-2"
+                      >
+                        <Icon name="X" size={20} />
+                      </button>
+                    </div>
+                    
+                    <div className="p-6 overflow-y-auto max-h-[70vh]">
+                      {/* Area Drag & Drop */}
+                      <div
+                        onDrop={handleImageDrop}
+                        onDragOver={handleDragOver}
+                        className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center mb-6 hover:border-blue-500 transition-colors cursor-pointer bg-gray-50"
+                      >
+                        <Icon name="Upload" size={48} className="mx-auto mb-4 text-gray-400" />
+                        <p className="text-lg font-light text-gray-700 mb-2">
+                          Trascina le immagini qui
+                        </p>
+                        <p className="text-sm text-gray-500 mb-4">
+                          oppure
+                        </p>
+                        <label className="inline-block bg-blue-600 text-white font-light py-3 px-6 hover:bg-blue-700 transition-colors cursor-pointer uppercase tracking-wide text-sm">
+                          Seleziona File
+                          <input
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                          />
+                        </label>
+                        <p className="text-xs text-gray-400 mt-4">
+                          Nessun limite di dimensione o numero
+                        </p>
+                      </div>
+
+                      {/* Preview Immagini */}
+                      {uploadedImages.length > 0 && (
+                        <div className="space-y-4">
+                          <h4 className="font-light text-lg">Immagini Caricate ({uploadedImages.length})</h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {uploadedImages.map((img, index) => (
+                              <div key={img.id} className="border border-gray-300 rounded-lg p-3 bg-white">
+                                <img 
+                                  src={img.data} 
+                                  alt={img.name}
+                                  className="w-full h-48 object-cover rounded mb-2"
+                                />
+                                <div className="text-xs text-gray-600 mb-2 truncate">{img.name}</div>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => moveImage(img.id, 'up')}
+                                    disabled={index === 0}
+                                    className="flex-1 text-xs bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed py-2 px-2 rounded transition-colors"
+                                    title="Sposta su"
+                                  >
+                                    <Icon name="ArrowUp" size={12} />
+                                  </button>
+                                  <button
+                                    onClick={() => moveImage(img.id, 'down')}
+                                    disabled={index === uploadedImages.length - 1}
+                                    className="flex-1 text-xs bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed py-2 px-2 rounded transition-colors"
+                                    title="Sposta giù"
+                                  >
+                                    <Icon name="ArrowDown" size={12} />
+                                  </button>
+                                  <button
+                                    onClick={() => removeImage(img.id)}
+                                    className="flex-1 text-xs bg-red-500 hover:bg-red-600 text-white py-2 px-2 rounded transition-colors"
+                                    title="Rimuovi"
+                                  >
+                                    <Icon name="Trash2" size={12} />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-6 border-t bg-gray-50 flex gap-4">
+                      <button
+                        onClick={() => {
+                          setShowImageUpload(false);
+                          setUploadedImages([]);
+                        }}
+                        className="flex-1 border border-gray-300 text-gray-700 font-light py-3 px-6 hover:bg-gray-100 transition-colors uppercase tracking-wide text-sm"
+                      >
+                        Annulla
+                      </button>
+                      <button
+                        onClick={confirmImageUpload}
+                        disabled={uploadedImages.length === 0}
+                        className="flex-1 bg-black text-white font-light py-3 px-6 hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors uppercase tracking-wide text-sm"
+                      >
+                        Genera con {uploadedImages.length} {uploadedImages.length === 1 ? 'Immagine' : 'Immagini'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Modal Anteprima */}
               {showPreview && (
                 <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -636,6 +904,28 @@
                               <div><strong>Totale articoli: {doors.length}</strong></div>
                             </>
                           )}
+                        </div>
+                        
+                        {/* Sezione Firme nell'anteprima */}
+                        <div className="mt-12 pt-8 border-t-2 border-black grid grid-cols-2 gap-8">
+                          <div className="text-center">
+                            <div className="font-bold mb-12">PER ACCETTAZIONE CLIENTE</div>
+                            <div className="border-t border-black pt-2 text-xs text-gray-500">
+                              Firma e timbro
+                            </div>
+                            <div className="mt-6 text-xs text-gray-500">
+                              Data: _____________________
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <div className="font-bold mb-12">UFFICIO COMMERCIALE</div>
+                            <div className="border-t border-black pt-2 text-xs text-gray-500">
+                              Tucci Wood Essence
+                            </div>
+                            <div className="mt-6 text-xs text-gray-500">
+                              Data: {new Date().toLocaleDateString('it-IT')}
+                            </div>
+                          </div>
                         </div>
                         
                         <div className="mt-8 text-center text-sm">
@@ -1169,7 +1459,7 @@
 
                       <div className="flex gap-4">
                         <button
-                          onClick={editingDoorId ? addDoor : addDoor}
+                          onClick={addDoor}
                           className="flex-1 bg-black text-white font-light py-4 px-8 hover:bg-gray-800 transition-colors uppercase tracking-wide text-sm"
                         >
                           {editingDoorId ? 'Salva Modifiche' : 'Aggiungi porta'}
@@ -1325,7 +1615,7 @@
                         </div>
                         
                         <button
-                          onClick={() => generateOrder(includePricesInPDF)}
+                          onClick={() => setShowGenerateMenu(true)}
                           disabled={doors.length === 0}
                           className="w-full bg-black text-white font-light py-4 px-6 hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors uppercase tracking-wide text-sm"
                         >
