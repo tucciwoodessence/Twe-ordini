@@ -46,6 +46,7 @@
           
           // Stati per gestione immagini
           const [uploadedImages, setUploadedImages] = useState([]);
+          const [mainImageId, setMainImageId] = useState(null);
           const [showImageUpload, setShowImageUpload] = useState(false);
           const [showGenerateMenu, setShowGenerateMenu] = useState(false);
           
@@ -131,6 +132,14 @@
 
           const removeImage = (id) => {
             setUploadedImages(prev => prev.filter(img => img.id !== id));
+            // Se rimuovo l'immagine principale, resetto
+            if (id === mainImageId) {
+              setMainImageId(null);
+            }
+          };
+
+          const setAsMainImage = (id) => {
+            setMainImageId(id);
           };
 
           const moveImage = (id, direction) => {
@@ -158,8 +167,9 @@
 
           const confirmImageUpload = () => {
             setShowImageUpload(false);
-            generateOrder(includePricesInPDF, uploadedImages);
+            generateOrder(includePricesInPDF, uploadedImages, mainImageId);
             setUploadedImages([]);
+            setMainImageId(null);
           };
 
           // Autenticazione
@@ -469,7 +479,7 @@
             return date.toLocaleDateString('it-IT');
           };
 
-          const generateOrder = (includePrices = true, images = []) => {
+          const generateOrder = (includePrices = true, images = [], mainImgId = null) => {
             if (doors.length === 0) {
               alert('Aggiungere almeno una porta all\'ordine');
               return;
@@ -485,15 +495,39 @@
             const docTitle = includePrices ? 'PREVENTIVO/ORDINE PORTE DA INTERNO' : 'ORDINE PRODUZIONE PORTE DA INTERNO';
             const fileName = includePrices ? 'TWE-Preventivo' : 'TWE-Produzione';
             
-            // Sezione immagini HTML
-            const imagesSection = images.length > 0 ? `
-              <div style="margin: 30px 0; padding: 20px; background: #f9f9f9; border: 1px solid #ddd;">
+            // Trova l'immagine principale e le altre
+            const mainImage = images.find(img => img.id === mainImgId);
+            const otherImages = images.filter(img => img.id !== mainImgId);
+            
+            // Sezione immagine principale (grande, prima pagina)
+            const mainImageSection = mainImage ? `
+              <div style="margin: 30px 0; text-align: center;">
+                <img src="${mainImage.data}" alt="Immagine principale" style="max-width: 100%; max-height: 600px; width: auto; height: auto; display: block; margin: 0 auto;" />
+              </div>
+            ` : '';
+            
+            // Sezione altre immagini (galleria)
+            const gallerySection = otherImages.length > 0 ? `
+              <div style="margin: 30px 0; page-break-before: always;">
+                <h3 style="margin: 0 0 20px 0; font-size: 16px; font-weight: bold;">Galleria Prodotti</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
+                  ${otherImages.map(img => `
+                    <div>
+                      <img src="${img.data}" alt="Prodotto" style="width: 100%; height: auto; display: block;" />
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            ` : '';
+            
+            // Se non c'è immagine principale ma ci sono immagini, usa la vecchia galleria
+            const imagesSection = !mainImage && images.length > 0 ? `
+              <div style="margin: 30px 0;">
                 <h3 style="margin: 0 0 20px 0; font-size: 16px; font-weight: bold;">Galleria Prodotti</h3>
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
                   ${images.map(img => `
-                    <div style="border: 1px solid #ddd; padding: 10px; background: white;">
-                      <img src="${img.data}" alt="${img.name}" style="width: 100%; height: auto; display: block;" />
-                      <div style="margin-top: 8px; font-size: 11px; color: #666; text-align: center;">${img.name}</div>
+                    <div>
+                      <img src="${img.data}" alt="Prodotto" style="width: 100%; height: auto; display: block;" />
                     </div>
                   `).join('')}
                 </div>
@@ -511,7 +545,7 @@
             .logo { width: 200px; height: auto; margin: 0 auto 15px; display: block; }
             .title { font-size: 18px; margin-top: 15px; }
             .info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; padding: 15px; background: #f9f9f9; }
-            .door { border: 1px solid #ddd; margin: 15px 0; padding: 15px; }
+            .door { border: 1px solid #ddd; margin: 15px 0; padding: 15px; page-break-inside: avoid; }
             .door-header { font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between; }
             .summary { margin-top: 30px; padding: 15px; background: #f0f0f0; }
             .total { font-weight: bold; font-size: 18px; color: #2563eb; }
@@ -536,6 +570,7 @@
             .signature-date { margin-top: 20px; font-size: 12px; color: #666; }
             @media print {
               .signature-section { page-break-inside: avoid; }
+              .door { page-break-inside: avoid; }
             }
           </style>
         </head>
@@ -562,7 +597,9 @@
             </div>
           </div>
           
+          ${mainImageSection}
           ${imagesSection}
+          ${gallerySection}
           
           ${doors.map((door, index) => `
             <div class="door">
@@ -695,6 +732,7 @@
                         onClick={() => {
                           setShowImageUpload(false);
                           setUploadedImages([]);
+                          setMainImageId(null);
                         }}
                         className="text-gray-400 hover:text-black p-2"
                       >
@@ -737,18 +775,26 @@
                           <h4 className="font-light text-lg">Immagini Caricate ({uploadedImages.length})</h4>
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             {uploadedImages.map((img, index) => (
-                              <div key={img.id} className="border border-gray-300 rounded-lg p-3 bg-white">
+                              <div 
+                                key={img.id} 
+                                className={`border rounded-lg p-3 ${img.id === mainImageId ? 'border-blue-600 bg-blue-50' : 'border-gray-300 bg-white'}`}
+                              >
+                                {img.id === mainImageId && (
+                                  <div className="text-xs font-bold text-blue-600 mb-2 uppercase">
+                                    ⭐ IMMAGINE PRINCIPALE
+                                  </div>
+                                )}
                                 <img 
                                   src={img.data} 
                                   alt={img.name}
                                   className="w-full h-48 object-cover rounded mb-2"
                                 />
                                 <div className="text-xs text-gray-600 mb-2 truncate">{img.name}</div>
-                                <div className="flex gap-2">
+                                <div className="grid grid-cols-2 gap-2 mb-2">
                                   <button
                                     onClick={() => moveImage(img.id, 'up')}
                                     disabled={index === 0}
-                                    className="flex-1 text-xs bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed py-2 px-2 rounded transition-colors"
+                                    className="text-xs bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed py-2 px-2 rounded transition-colors"
                                     title="Sposta su"
                                   >
                                     <Icon name="ArrowUp" size={12} />
@@ -756,14 +802,28 @@
                                   <button
                                     onClick={() => moveImage(img.id, 'down')}
                                     disabled={index === uploadedImages.length - 1}
-                                    className="flex-1 text-xs bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed py-2 px-2 rounded transition-colors"
+                                    className="text-xs bg-gray-200 hover:bg-gray-300 disabled:bg-gray-100 disabled:cursor-not-allowed py-2 px-2 rounded transition-colors"
                                     title="Sposta giù"
                                   >
                                     <Icon name="ArrowDown" size={12} />
                                   </button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                  <button
+                                    onClick={() => setAsMainImage(img.id)}
+                                    disabled={img.id === mainImageId}
+                                    className={`text-xs py-2 px-2 rounded transition-colors ${
+                                      img.id === mainImageId 
+                                        ? 'bg-blue-600 text-white cursor-default' 
+                                        : 'bg-blue-500 hover:bg-blue-600 text-white'
+                                    }`}
+                                    title="Imposta come principale"
+                                  >
+                                    {img.id === mainImageId ? '⭐ Principale' : 'Principale'}
+                                  </button>
                                   <button
                                     onClick={() => removeImage(img.id)}
-                                    className="flex-1 text-xs bg-red-500 hover:bg-red-600 text-white py-2 px-2 rounded transition-colors"
+                                    className="text-xs bg-red-500 hover:bg-red-600 text-white py-2 px-2 rounded transition-colors"
                                     title="Rimuovi"
                                   >
                                     <Icon name="Trash2" size={12} />
@@ -772,6 +832,11 @@
                               </div>
                             ))}
                           </div>
+                          {mainImageId && (
+                            <div className="text-sm text-blue-600 bg-blue-50 border border-blue-200 p-3 rounded">
+                              ℹ️ L'immagine principale verrà mostrata in grande nella prima pagina del documento
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -781,6 +846,7 @@
                         onClick={() => {
                           setShowImageUpload(false);
                           setUploadedImages([]);
+                          setMainImageId(null);
                         }}
                         className="flex-1 border border-gray-300 text-gray-700 font-light py-3 px-6 hover:bg-gray-100 transition-colors uppercase tracking-wide text-sm"
                       >
