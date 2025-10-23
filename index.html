@@ -90,13 +90,14 @@
           const [showPreview, setShowPreview] = useState(false);
           const [includePricesInPDF, setIncludePricesInPDF] = useState(true);
           const [editingDoorId, setEditingDoorId] = useState(null);
+          const [showCustomCerniere, setShowCustomCerniere] = useState(false);
 
           const aperturaOptions = ['Spinta a destra', 'Spinta a sinistra'];
           const sistemaCerniereOptions = [
             'Anuba', 'Scorrevole interno muro', 'Scorrevole esterno muro', 
             'Cerniere a scomparsa', 'Cerniere pivot', 'Libro simmetrico', 
             'Libro asimmetrico', 'Libro Celegon 90°', 'Libro Celegon 180°', 
-            'Rototraslante', 'Binario invisibile Magic'
+            'Rototraslante', 'Binario invisibile Magic', 'Altro'
           ];
           const finituraFerramentaOptions = ['Cromo satinato', 'Bianco', 'Nero', 'Altro'];
 
@@ -334,6 +335,16 @@
 
           const handleInputChange = (field, value) => {
             setCurrentDoor({ ...currentDoor, [field]: value });
+            
+            // Se il campo è sistemaCerniere e il valore è "Altro", mostra input personalizzato
+            if (field === 'sistemaCerniere') {
+              if (value === 'Altro') {
+                setShowCustomCerniere(true);
+                setCurrentDoor({ ...currentDoor, [field]: '' });
+              } else {
+                setShowCustomCerniere(false);
+              }
+            }
           };
 
           // Gestione extra per porta
@@ -409,6 +420,8 @@
               apertura: '', sistemaCerniere: '', prezzoCerniere: 0,
               finituraFerramenta: '', prezzoFerramenta: 0, quantita: 1, note: '', extraPorta: []
             });
+            
+            setShowCustomCerniere(false);
           };
 
           const editDoor = (doorId) => {
@@ -416,12 +429,21 @@
             if (doorToEdit) {
               setCurrentDoor({...doorToEdit});
               setEditingDoorId(doorId);
+              
+              // Se il sistema cerniere non è nell'elenco predefinito, attiva modalità custom
+              if (doorToEdit.sistemaCerniere && !sistemaCerniereOptions.includes(doorToEdit.sistemaCerniere)) {
+                setShowCustomCerniere(true);
+              } else {
+                setShowCustomCerniere(false);
+              }
+              
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }
           };
 
           const cancelEdit = () => {
             setEditingDoorId(null);
+            setShowCustomCerniere(false);
             setCurrentDoor({
               posizione: '', stanza: '', modelloPorta: '', prezzoBaseModello: 0, scontisticaModello: 0,
               finitura: '', prezzoFinitura: 0, larghezza: '', altezza: '', spessoreMuro: '',
@@ -461,6 +483,7 @@
             
             setEditingDoorId(null);
             setIncludePricesInPDF(true);
+            setShowCustomCerniere(false);
             
             window.scrollTo({ top: 0, behavior: 'smooth' });
           };
@@ -1319,16 +1342,39 @@
                           <label className="block text-sm font-light text-black mb-3 uppercase tracking-wide">
                             Sistema cerniere
                           </label>
-                          <select
-                            value={currentDoor.sistemaCerniere}
-                            onChange={(e) => handleInputChange('sistemaCerniere', e.target.value)}
-                            className="w-full p-4 border border-gray-300 focus:border-black focus:outline-none bg-white text-black"
-                          >
-                            <option value="">Seleziona sistema cerniere</option>
-                            {sistemaCerniereOptions.map(option => (
-                              <option key={option} value={option}>{option}</option>
-                            ))}
-                          </select>
+                          {!showCustomCerniere ? (
+                            <select
+                              value={currentDoor.sistemaCerniere}
+                              onChange={(e) => handleInputChange('sistemaCerniere', e.target.value)}
+                              className="w-full p-4 border border-gray-300 focus:border-black focus:outline-none bg-white text-black"
+                            >
+                              <option value="">Seleziona sistema cerniere</option>
+                              {sistemaCerniereOptions.map(option => (
+                                <option key={option} value={option}>{option}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <div className="relative">
+                              <input
+                                type="text"
+                                value={currentDoor.sistemaCerniere}
+                                onChange={(e) => setCurrentDoor({ ...currentDoor, sistemaCerniere: e.target.value })}
+                                className="w-full p-4 border border-gray-300 focus:border-black focus:outline-none bg-white text-black"
+                                placeholder="Inserisci sistema cerniere personalizzato"
+                                autoFocus
+                              />
+                              <button
+                                onClick={() => {
+                                  setShowCustomCerniere(false);
+                                  setCurrentDoor({ ...currentDoor, sistemaCerniere: '' });
+                                }}
+                                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-black p-2"
+                                title="Torna al menù"
+                              >
+                                <Icon name="X" size={16} />
+                              </button>
+                            </div>
+                          )}
                         </div>
                         <div>
                           <label className="block text-sm font-light text-black mb-3 uppercase tracking-wide">
