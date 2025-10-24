@@ -655,6 +655,14 @@
               <div class="no-prices">DOCUMENTO PRODUZIONE - Prezzi non inclusi</div>
               <div><strong>Totale porte da produrre: ${doors.reduce((sum, door) => sum + parseInt(door.quantita || 1), 0)}</strong></div>
               <div><strong>Totale articoli: ${doors.length}</strong></div>
+              ${orderInfo.altriExtra.length > 0 ? `
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #ccc;">
+                  <strong>Altri servizi/lavorazioni:</strong>
+                  <ul style="margin: 10px 0; padding-left: 20px;">
+                    ${orderInfo.altriExtra.map(extra => extra.descrizione ? `<li>${extra.descrizione}</li>` : '').join('')}
+                  </ul>
+                </div>
+              ` : ''}
             `}
           </div>
           
