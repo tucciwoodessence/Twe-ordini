@@ -999,6 +999,18 @@
                               <div className="text-gray-600 italic mb-2">DOCUMENTO PRODUZIONE - Prezzi non inclusi</div>
                               <div><strong>Totale porte da produrre: {doors.reduce((sum, door) => sum + parseInt(door.quantita || 1), 0)}</strong></div>
                               <div><strong>Totale articoli: {doors.length}</strong></div>
+                              {orderInfo.altriExtra.length > 0 && orderInfo.altriExtra.some(extra => extra.descrizione) && (
+                                <div className="mt-4 pt-4 border-t border-gray-300">
+                                  <strong>Altri servizi/lavorazioni:</strong>
+                                  <ul className="mt-2 ml-5 list-disc text-sm">
+                                    {orderInfo.altriExtra.map(extra => 
+                                      extra.descrizione && (
+                                        <li key={extra.id}>{extra.descrizione}</li>
+                                      )
+                                    )}
+                                  </ul>
+                                </div>
+                              )}
                             </>
                           )}
                         </div>
