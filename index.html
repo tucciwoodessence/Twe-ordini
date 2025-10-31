@@ -570,6 +570,7 @@
             .info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; padding: 15px; background: #f9f9f9; }
             .door { border: 1px solid #ddd; margin: 15px 0; padding: 15px; page-break-inside: avoid; }
             .door-header { font-weight: bold; margin-bottom: 10px; display: flex; justify-content: space-between; }
+            .door-notes { white-space: pre-line; margin-top: 8px; line-height: 1.6; }
             .summary { margin-top: 30px; padding: 15px; background: #f0f0f0; }
             .total { font-weight: bold; font-size: 18px; color: #2563eb; }
             .no-prices { color: #666; font-style: italic; }
@@ -641,7 +642,7 @@
                 `<div><strong>Extra porta:</strong> ${door.extraPorta.map(extra => 
                   `${extra.descrizione}${includePrices ? ` (${formatPrice(parseFloat(extra.prezzo) || 0)})` : ''}`
                 ).join(', ')}</div>` : ''}
-              ${door.note ? `<div>Note: ${door.note}</div>` : ''}
+              ${door.note ? `<div class="door-notes"><strong>Note:</strong> ${door.note}</div>` : ''}
             </div>
           `).join('')}
           
@@ -977,7 +978,11 @@
                                 ).join(', ')}
                               </div>
                             )}
-                            {door.note && <div>Note: {door.note}</div>}
+                            {door.note && (
+                              <div style={{whiteSpace: 'pre-line', marginTop: '8px', lineHeight: '1.6'}}>
+                                <strong>Note:</strong> {door.note}
+                              </div>
+                            )}
                           </div>
                         ))}
                         
@@ -1027,6 +1032,20 @@
                             </>
                           )}
                         </div>
+                        
+                        {/* Note e Condizioni - solo per preventivi con prezzi */}
+                        {includePricesInPDF && (
+                          <div className="mt-10 p-5 bg-gray-100 border border-gray-300">
+                            <h4 className="text-sm font-bold uppercase mb-4">Note e Condizioni</h4>
+                            <ul className="space-y-2 text-sm list-disc ml-5">
+                              <li>Tutti i prezzi indicati si intendono <strong>IVA esclusa</strong>.</li>
+                              <li>Rilievo e conferma misure a nostro carico e da effettuarsi dopo la conferma d'ordine.</li>
+                              <li>Il preventivo è da intendersi definitivo solo dopo il rilievo su cantiere delle effettive misure delle porte da parte del nostro tecnico.</li>
+                              <li>Rimozione e smaltimento delle porte esistenti non incluso.</li>
+                              <li>Preventivo valido 30 giorni dalla data di emissione.</li>
+                            </ul>
+                          </div>
+                        )}
                         
                         {/* Sezione Firme nell'anteprima */}
                         <div className="mt-12 pt-8 border-t-2 border-black grid grid-cols-2 gap-8">
