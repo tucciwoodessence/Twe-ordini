@@ -89,6 +89,7 @@
 
           const [showPreview, setShowPreview] = useState(false);
           const [includePricesInPDF, setIncludePricesInPDF] = useState(true);
+          const [includeCommercialNotes, setIncludeCommercialNotes] = useState(true);
           const [editingDoorId, setEditingDoorId] = useState(null);
           const [showCustomCerniere, setShowCustomCerniere] = useState(false);
 
@@ -483,6 +484,7 @@
             
             setEditingDoorId(null);
             setIncludePricesInPDF(true);
+            setIncludeCommercialNotes(true);
             setShowCustomCerniere(false);
             
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -502,7 +504,7 @@
             return date.toLocaleDateString('it-IT');
           };
 
-          const generateOrder = (includePrices = true, images = [], mainImgId = null) => {
+          const generateOrder = (includePrices = true, images = [], mainImgId = null, includeCommercialNotes = true) => {
             if (doors.length === 0) {
               alert('Aggiungere almeno una porta all\'ordine');
               return;
@@ -672,10 +674,12 @@
             <h4 style="margin: 0 0 15px 0; font-size: 14px; font-weight: bold; text-transform: uppercase;">Note e Condizioni</h4>
             <ul style="margin: 0; padding-left: 20px; line-height: 1.8;">
               <li>Tutti i prezzi indicati si intendono <strong>IVA esclusa</strong>.</li>
+              ${includeCommercialNotes ? `
               <li>Rilievo e conferma misure a nostro carico e da effettuarsi dopo la conferma d'ordine.</li>
               <li>Il preventivo è da intendersi definitivo solo dopo il rilievo su cantiere delle effettive misure delle porte da parte del nostro tecnico.</li>
               <li>Rimozione e smaltimento delle porte esistenti non incluso.</li>
               <li>Preventivo valido 30 giorni dalla data di emissione.</li>
+              ` : ''}
             </ul>
           </div>
           ` : ''}
@@ -1039,10 +1043,14 @@
                             <h4 className="text-sm font-bold uppercase mb-4">Note e Condizioni</h4>
                             <ul className="space-y-2 text-sm list-disc ml-5">
                               <li>Tutti i prezzi indicati si intendono <strong>IVA esclusa</strong>.</li>
-                              <li>Rilievo e conferma misure a nostro carico e da effettuarsi dopo la conferma d'ordine.</li>
-                              <li>Il preventivo è da intendersi definitivo solo dopo il rilievo su cantiere delle effettive misure delle porte da parte del nostro tecnico.</li>
-                              <li>Rimozione e smaltimento delle porte esistenti non incluso.</li>
-                              <li>Preventivo valido 30 giorni dalla data di emissione.</li>
+                              {includeCommercialNotes && (
+                                <>
+                                  <li>Rilievo e conferma misure a nostro carico e da effettuarsi dopo la conferma d'ordine.</li>
+                                  <li>Il preventivo è da intendersi definitivo solo dopo il rilievo su cantiere delle effettive misure delle porte da parte del nostro tecnico.</li>
+                                  <li>Rimozione e smaltimento delle porte esistenti non incluso.</li>
+                                  <li>Preventivo valido 30 giorni dalla data di emissione.</li>
+                                </>
+                              )}
                             </ul>
                           </div>
                         )}
@@ -1776,6 +1784,23 @@
                           <label htmlFor="includePrices" className="text-sm font-light text-black cursor-pointer">
                             Includi prezzi nel documento
                           </label>
+                        </div>
+                        
+                        <div className="flex items-center space-x-3 p-3 bg-gray-50 border border-gray-200">
+                          <input
+                            type="checkbox"
+                            id="includeCommercialNotes"
+                            checked={includeCommercialNotes}
+                            onChange={(e) => setIncludeCommercialNotes(e.target.checked)}
+                            className="w-4 h-4 text-black border-gray-300 rounded focus:ring-black focus:ring-2"
+                          />
+                          <label htmlFor="includeCommercialNotes" className="text-sm font-light text-black cursor-pointer">
+                            Includi note commerciali standard
+                          </label>
+                        </div>
+                        
+                        <div className="text-xs text-gray-500 px-3 pb-2 -mt-2">
+                          (Rilievo, validità, smaltimento. IVA sempre inclusa)
                         </div>
                         
                         <button
