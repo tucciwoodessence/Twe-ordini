@@ -640,10 +640,31 @@
               ${door.apertura ? `<div>Apertura: ${door.apertura}</div>` : ''}
               ${door.sistemaCerniere ? `<div>Sistema cerniere: ${door.sistemaCerniere}</div>` : ''}
               ${door.finituraFerramenta ? `<div>Finitura ferramenta: ${door.finituraFerramenta}</div>` : ''}
-              ${(door.extraPorta && door.extraPorta.length > 0) ? 
-                `<div><strong>Extra porta:</strong> ${door.extraPorta.map(extra => 
-                  `${extra.descrizione}${includePrices ? ` (${formatPrice(parseFloat(extra.prezzo) || 0)})` : ''}`
-                ).join(', ')}</div>` : ''}
+              
+              ${includePrices && (door.prezzoBaseModello > 0 || door.prezzoFinitura > 0 || door.prezzoCerniere > 0 || door.prezzoFerramenta > 0 || door.fuoriMisuraLarghezza > 0 || door.fuoriMisuraAltezza > 0 || door.fuoriMisuraSpessore > 0 || (door.extraPorta && door.extraPorta.length > 0)) ? `
+                <div style="margin-top: 15px; padding: 12px; background: #f9f9f9; border-left: 3px solid #2563eb;">
+                  <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px;">DETTAGLIO PREZZI:</div>
+                  <div style="font-size: 12px; line-height: 1.8;">
+                    ${door.prezzoBaseModello > 0 ? `<div style="display: flex; justify-content: space-between;"><span>• Prezzo base modello:</span><span>${formatPrice(parseFloat(door.prezzoBaseModello))}</span></div>` : ''}
+                    ${door.scontisticaModello > 0 ? `<div style="display: flex; justify-content: space-between; color: #dc2626;"><span>• Sconto ${door.scontisticaModello}%:</span><span>-${formatPrice((parseFloat(door.prezzoBaseModello) || 0) * (parseFloat(door.scontisticaModello) || 0) / 100)}</span></div>` : ''}
+                    ${door.prezzoFinitura > 0 ? `<div style="display: flex; justify-content: space-between;"><span>• Finitura ${door.finitura || ''}:</span><span>${formatPrice(parseFloat(door.prezzoFinitura))}</span></div>` : ''}
+                    ${door.fuoriMisuraLarghezza > 0 ? `<div style="display: flex; justify-content: space-between;"><span>• Fuori misura larghezza:</span><span>${formatPrice(parseFloat(door.fuoriMisuraLarghezza))}</span></div>` : ''}
+                    ${door.fuoriMisuraAltezza > 0 ? `<div style="display: flex; justify-content: space-between;"><span>• Fuori misura altezza:</span><span>${formatPrice(parseFloat(door.fuoriMisuraAltezza))}</span></div>` : ''}
+                    ${door.fuoriMisuraSpessore > 0 ? `<div style="display: flex; justify-content: space-between;"><span>• Fuori misura spessore:</span><span>${formatPrice(parseFloat(door.fuoriMisuraSpessore))}</span></div>` : ''}
+                    ${door.prezzoCerniere > 0 ? `<div style="display: flex; justify-content: space-between;"><span>• Sistema cerniere ${door.sistemaCerniere || ''}:</span><span>${formatPrice(parseFloat(door.prezzoCerniere))}</span></div>` : ''}
+                    ${door.prezzoFerramenta > 0 ? `<div style="display: flex; justify-content: space-between;"><span>• Ferramenta ${door.finituraFerramenta || ''}:</span><span>${formatPrice(parseFloat(door.prezzoFerramenta))}</span></div>` : ''}
+                    ${(door.extraPorta && door.extraPorta.length > 0) ? door.extraPorta.map(extra => 
+                      extra.prezzo > 0 ? `<div style="display: flex; justify-content: space-between; color: #2563eb;"><span>• Extra: ${extra.descrizione}:</span><span>${formatPrice(parseFloat(extra.prezzo))}</span></div>` : ''
+                    ).join('') : ''}
+                    <div style="border-top: 2px solid #2563eb; margin-top: 8px; padding-top: 8px; display: flex; justify-content: space-between; font-weight: bold; color: #2563eb;">
+                      <span>TOTALE PORTA (x${door.quantita}):</span><span>${formatPrice(calculateDoorPrice(door))}</span>
+                    </div>
+                  </div>
+                </div>
+              ` : ''}
+              
+              ${(door.extraPorta && door.extraPorta.length > 0 && !includePrices) ? 
+                `<div><strong>Extra porta:</strong> ${door.extraPorta.map(extra => extra.descrizione).join(', ')}</div>` : ''}
               ${door.note ? `<div class="door-notes"><strong>Note:</strong> ${door.note}</div>` : ''}
             </div>
           `).join('')}
@@ -975,11 +996,78 @@
                             {door.apertura && <div>Apertura: {door.apertura}</div>}
                             {door.sistemaCerniere && <div>Sistema cerniere: {door.sistemaCerniere}</div>}
                             {door.finituraFerramenta && <div>Finitura ferramenta: {door.finituraFerramenta}</div>}
-                            {door.extraPorta && door.extraPorta.length > 0 && (
-                              <div>
-                                <strong>Extra porta:</strong> {door.extraPorta.map(extra => 
-                                  `${extra.descrizione}${includePricesInPDF ? ` (${formatCurrency(parseFloat(extra.prezzo) || 0)})` : ''}`
-                                ).join(', ')}
+                            
+                            {includePricesInPDF && (door.prezzoBaseModello > 0 || door.prezzoFinitura > 0 || door.prezzoCerniere > 0 || door.prezzoFerramenta > 0 || door.fuoriMisuraLarghezza > 0 || door.fuoriMisuraAltezza > 0 || door.fuoriMisuraSpessore > 0 || (door.extraPorta && door.extraPorta.length > 0)) && (
+                              <div className="mt-4 p-3 bg-gray-50 border-l-4 border-blue-600">
+                                <div className="font-bold mb-2 text-sm">DETTAGLIO PREZZI:</div>
+                                <div className="text-sm space-y-1">
+                                  {door.prezzoBaseModello > 0 && (
+                                    <div className="flex justify-between">
+                                      <span>• Prezzo base modello:</span>
+                                      <span>{formatCurrency(parseFloat(door.prezzoBaseModello))}</span>
+                                    </div>
+                                  )}
+                                  {door.scontisticaModello > 0 && (
+                                    <div className="flex justify-between text-red-600">
+                                      <span>• Sconto {door.scontisticaModello}%:</span>
+                                      <span>-{formatCurrency((parseFloat(door.prezzoBaseModello) || 0) * (parseFloat(door.scontisticaModello) || 0) / 100)}</span>
+                                    </div>
+                                  )}
+                                  {door.prezzoFinitura > 0 && (
+                                    <div className="flex justify-between">
+                                      <span>• Finitura {door.finitura || ''}:</span>
+                                      <span>{formatCurrency(parseFloat(door.prezzoFinitura))}</span>
+                                    </div>
+                                  )}
+                                  {door.fuoriMisuraLarghezza > 0 && (
+                                    <div className="flex justify-between">
+                                      <span>• Fuori misura larghezza:</span>
+                                      <span>{formatCurrency(parseFloat(door.fuoriMisuraLarghezza))}</span>
+                                    </div>
+                                  )}
+                                  {door.fuoriMisuraAltezza > 0 && (
+                                    <div className="flex justify-between">
+                                      <span>• Fuori misura altezza:</span>
+                                      <span>{formatCurrency(parseFloat(door.fuoriMisuraAltezza))}</span>
+                                    </div>
+                                  )}
+                                  {door.fuoriMisuraSpessore > 0 && (
+                                    <div className="flex justify-between">
+                                      <span>• Fuori misura spessore:</span>
+                                      <span>{formatCurrency(parseFloat(door.fuoriMisuraSpessore))}</span>
+                                    </div>
+                                  )}
+                                  {door.prezzoCerniere > 0 && (
+                                    <div className="flex justify-between">
+                                      <span>• Sistema cerniere {door.sistemaCerniere || ''}:</span>
+                                      <span>{formatCurrency(parseFloat(door.prezzoCerniere))}</span>
+                                    </div>
+                                  )}
+                                  {door.prezzoFerramenta > 0 && (
+                                    <div className="flex justify-between">
+                                      <span>• Ferramenta {door.finituraFerramenta || ''}:</span>
+                                      <span>{formatCurrency(parseFloat(door.prezzoFerramenta))}</span>
+                                    </div>
+                                  )}
+                                  {door.extraPorta && door.extraPorta.length > 0 && door.extraPorta.map(extra => 
+                                    extra.prezzo > 0 && (
+                                      <div key={extra.id} className="flex justify-between text-blue-600">
+                                        <span>• Extra: {extra.descrizione}:</span>
+                                        <span>{formatCurrency(parseFloat(extra.prezzo))}</span>
+                                      </div>
+                                    )
+                                  )}
+                                  <div className="border-t-2 border-blue-600 mt-2 pt-2 flex justify-between font-bold text-blue-600">
+                                    <span>TOTALE PORTA (x{door.quantita}):</span>
+                                    <span>{formatCurrency(calculateDoorPrice(door))}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            
+                            {door.extraPorta && door.extraPorta.length > 0 && !includePricesInPDF && (
+                              <div className="mt-2">
+                                <strong>Extra porta:</strong> {door.extraPorta.map(extra => extra.descrizione).join(', ')}
                               </div>
                             )}
                             {door.note && (
